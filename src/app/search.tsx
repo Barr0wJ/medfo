@@ -1,60 +1,140 @@
-//Displays the screen name when the user navigates to the /search route.
 import { Link } from "expo-router";
-import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, } from "react-native";
-
-/*
-async function fetchData(query: string) {
-    const apiUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=science%5bjournal%5d+AND+breast+cancer+AND+2008%5bpdat%5d`;
-  try {
-    const response = await fetch(apiUrl);
-
-    if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.text();
-    return data;
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    return null;
-  }
-}
-*/
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import type { SemanticScholarPaperResult } from "./apicall";
 
 export default function SearchScreen() {
-    const [query, setText] = useState('');
-    return (
-        <View style={styles.container}>
-            <Text style={styles.text}>Search Screen</Text>
-              <Link href="/" style={styles.button}>
-                Go to Home Screen
-              </Link>
-              <TextInput placeholder="Insert Query" 
-                value={query}
-                onChangeText={setText}
-                style={styles.text}
-              />
-            {/* <Text style={styles.text}>{fetchData(query)}</Text> */}
-        </View>
-    );
+  const [query, setQuery] = useState("transformer");
+  const [results, setResults] = useState<SemanticScholarPaperResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSearch = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `http://localhost:8081/api/search?q=${encodeURIComponent(query)}&limit=5`
+      );
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? `Request failed (${response.status})`);
+      }
+
+      const data = await response.json();
+      setResults(data.results ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void handleSearch();
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.heading}>Search Screen</Text>
+
+      <Link href="/" style={styles.button}>
+        Go to Home Screen
+      </Link>
+
+      <TextInput
+        placeholder="Insert Query"
+        value={query}
+        onChangeText={setQuery}
+        style={styles.input}
+        onSubmitEditing={() => void handleSearch()}
+      />
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#fff" />
+      ) : error ? (
+        <Text style={styles.error}>{error}</Text>
+      ) : (
+        <ScrollView style={styles.resultsContainer}>
+          {results.map((paper) => (
+            <View key={paper.paperId ?? paper.title ?? paper.url ?? `${paper.title}-${paper.year}`} style={styles.resultCard}>
+              <Text style={styles.resultTitle}>{paper.title ?? "Untitled paper"}</Text>
+              <Text style={styles.resultMeta}>{paper.year ?? "Unknown year"}</Text>
+              <Text style={styles.resultMeta}>{paper.venue ?? "Unknown venue"}</Text>
+              <Text style={styles.resultAbstract} numberOfLines={4}>
+                {paper.abstract ?? "No abstract available."}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+    </View>
+  );
 }
 
-
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: 'lightskyblue',
-        alignItems: "center",
-    },
-    text: {
-        fontSize: 20,
-        fontWeight: "bold",
-    },
-    button: {
-        fontSize: 20,
-        textDecorationLine: 'underline',
-        color: '#fff',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: "lightskyblue",
+    padding: 20,
+    alignItems: "center",
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 16,
+  },
+  button: {
+    fontSize: 18,
+    textDecorationLine: "underline",
+    color: "#fff",
+    marginBottom: 16,
+  },
+  input: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  resultsContainer: {
+    width: "100%",
+    marginTop: 12,
+  },
+  resultCard: {
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  resultTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  resultMeta: {
+    fontSize: 12,
+    color: "#333",
+    marginBottom: 4,
+  },
+  resultAbstract: {
+    fontSize: 12,
+    color: "#222",
+  },
+  error: {
+    color: "#b00020",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
