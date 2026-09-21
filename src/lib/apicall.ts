@@ -19,6 +19,17 @@ export type SemanticScholarSearchResponse = {
   results: SemanticScholarPaperResult[];
 };
 
+export class SemanticScholarError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly url: string,
+    details: string,
+  ) {
+    super(`Semantic Scholar request failed (${status}): ${details}`);
+    this.name = "SemanticScholarError";
+  }
+}
+
 export async function searchSemanticScholar(
   query: string,
   limit = 10
@@ -38,17 +49,30 @@ export async function searchSemanticScholar(
     "paperId,title,abstract,year,authors,venue,url,externalIds"
   );
 
-  const apiKey = "s2k-Cr3USDO3GiH2ylL4myQHzgVkWnWThhjXit9lFFZ9";//process.env.APIKEY;
+  const apiKey = process.env.APIKEY;
+  const requestHeaders = {
+    ...(apiKey ? { "x-api-key": apiKey } : {}),
+    Accept: "application/json",
+  };
+
   const response = await fetch(url.toString(), {
-    headers: {
-      ...(apiKey ? { "x-api-key": apiKey } : {}),
-      Accept: "application/json",
-    },
+    headers: requestHeaders,
   });
 
   if (!response.ok) {
     const details = await response.text();
-    throw new Error(`Semantic Scholar request failed (${response.status}): ${details}`);
+
+    console.error("Semantic Scholar request failed:", {
+      url: url.toString(),
+      status: response.status,
+      details,
+    });
+
+    throw new SemanticScholarError(
+      response.status,
+      url.toString(),
+      details,
+    );
   }
 
   const data = await response.json();

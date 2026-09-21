@@ -2,13 +2,15 @@ import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Linking,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
-import type { SemanticScholarPaperResult } from "./apicall";
+import type { SemanticScholarPaperResult } from "../lib/apicall";
 
 export default function SearchScreen() {
   const [query, setQuery] = useState("transformer");
@@ -74,6 +76,15 @@ export default function SearchScreen() {
               <Text style={styles.resultAbstract} numberOfLines={4}>
                 {paper.abstract ?? "No abstract available."}
               </Text>
+
+              {paper.url ? (
+                <Pressable
+                  accessibilityRole="link"
+                  onPress={() => void Linking.openURL(paper.url!)}
+                >
+                  <Text style={styles.paperLink}>Open paper</Text>
+                </Pressable>
+              ) : null}
             </View>
           ))}
         </ScrollView>
@@ -136,5 +147,12 @@ const styles = StyleSheet.create({
     color: "#b00020",
     fontSize: 14,
     fontWeight: "600",
+  },
+  paperLink: {
+    color: "#0645AD",
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 8,
+    textDecorationLine: "underline",
   },
 });
