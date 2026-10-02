@@ -51,7 +51,7 @@ export default function SearchScreen() {
       <Text style={styles.heading}>Search Screen</Text>
 
       <Link href="/" style={styles.button}>
-        Go to Home Screen
+        <Text style={styles.button}>Go to Home Screen</Text>
       </Link>
 
       <TextInput

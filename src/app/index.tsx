@@ -5,8 +5,8 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Welcome to Medfo</Text>
-      <Link href="/search" style={styles.button}>
-        Go to Search Screen
+      <Link href="/search">
+        <Text style={styles.button}>Go to Search Screen</Text>
       </Link>
     </View>
   );
