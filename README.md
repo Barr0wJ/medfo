@@ -2,7 +2,7 @@
 
 Medfo is a data retrieval application for researchers and anyone who is interested in learning. Using API calls to Semantics Scholar and Europe PMC research documentation and articles are pulled for users to access. 
 
-Alongside this articles are labelled based on credibillity indicators such as peer review and date of publication.
+Alongside retrieval, articles are labelled based on credibility indicators such as peer review and date of publication.
 
 *Accreditations*
 
